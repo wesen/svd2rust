@@ -3,9 +3,10 @@ use svd::{Access, Field, Peripheral, Register};
 pub fn list_peripheral(p: &Peripheral) -> String {
     let mut strs: Vec<String> = Vec::new();
 
-    strs.push(format!("{} (0x{:08x}):",
+    strs.push(format!("{} (0x{:08x}): {}",
                       p.name,
-                      p.base_address));
+                      p.base_address,
+                      p.description.as_ref().unwrap_or(&"".to_owned())));
 
     if let Some(ref group_name) = p.group_name {
         strs.push(format!("  ({})", group_name));
@@ -33,9 +34,11 @@ pub fn list_peripheral(p: &Peripheral) -> String {
             if let Some(fields) = register.fields.as_ref() {
                 for field in fields {
                     let field: &Field = field;
-                    strs.push(format!("      - {name:<0$} : {description}",
+                    strs.push(format!("      - {name:<0$} : {start}-{end} - {description}",
                                       max_field_len,
                                       name = field.name,
+                                      start = field.bit_range.offset,
+                                      end = field.bit_range.offset + field.bit_range.width - 1,
                                       description = field.description.as_ref()
                                                                      .unwrap_or(&"".to_owned())));
                 }
