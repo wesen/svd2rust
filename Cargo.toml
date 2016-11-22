@@ -9,6 +9,11 @@ name = "svd2rust"
 repository = "https://github.com/japaric/svd2rust"
 version = "0.1.1"
 
+[[bin]]
+doc = false
+name = "svd2rust"
+path = "src/main.rs"
+
 [dependencies]
 clap = "2.14.0"
 inflections = "1.0.0"
