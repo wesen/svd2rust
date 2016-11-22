@@ -79,11 +79,17 @@ fn main() {
                                               "/commit-info.txt"))))
         .get_matches();
 
-    let xml = &mut String::new();
-    File::open(matches.value_of("input").unwrap())
-        .unwrap()
-        .read_to_string(xml)
-        .unwrap();
+    let mut xml = &mut String::new();
+    let input_file = matches.value_of("input").unwrap();
+    match File::open(input_file) {
+        Ok(mut f) => {
+            f.read_to_string(&mut xml).unwrap();
+        },
+        Err(e) => {
+            println!("Could not open {}: {}", input_file, e);
+            std::process::exit(1);
+        }
+    }
 
     let d = svd::parse(xml);
 
