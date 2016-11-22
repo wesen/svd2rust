@@ -46,7 +46,7 @@ fn list_peripherals(d: &svd::Device, pattern: Option<&str>) {
             let pattern = pattern.to_ascii_lowercase();
             for peripheral in &d.peripherals {
                 if peripheral.name.to_ascii_lowercase().contains(&pattern) {
-                    println!("{}", peripheral.name);
+                    println!("{}", svd2rust::list_peripheral(peripheral));
                 }
             }
         }
@@ -67,13 +67,14 @@ fn main() {
             .arg(Arg::with_name("peripheral")
                 .help("Pattern used to select a single peripheral")
                 .value_name("PATTERN")
-            .index(1)))
+                .index(1)))
         .subcommand(SubCommand::with_name("list")
             .about("list the available peripherals")
             .arg(Arg::with_name("peripheral")
                 .help("Pattern used to select mtching peripherals")
                 .value_name("PATTERN")
-            .index(1)))
+                .index(1)
+                .multiple(true)))
         .version(concat!(env!("CARGO_PKG_VERSION"),
                          include_str!(concat!(env!("OUT_DIR"),
                                               "/commit-info.txt"))))
