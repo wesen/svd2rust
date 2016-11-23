@@ -1,3 +1,5 @@
+#![allow(unused_variables)]
+
 use svd::{Access, EnumeratedValue, Field, Peripheral, Register};
 use regex::Regex;
 
@@ -94,7 +96,7 @@ pub fn match_peripheral(re: &Regex, peripheral: &Peripheral, settings: &SearchSe
 fn format_peripheral(p: &Peripheral, settings: &OutputSettings) -> String {
     let mut strs: Vec<String> = Vec::new();
 
-    strs.push(format!("{}", p.name.clone()));
+    strs.push(format!("||{}||", p.name.clone()));
 
     if let Some(ref group_name) = p.group_name {
         strs.push(format!("({})", group_name));
@@ -112,7 +114,7 @@ fn format_register(register: &Register,
                    max_field_len: usize,
                    settings: &OutputSettings) -> String {
 
-    format!("  - {name:<0$} (+0x{offset:04x}): {access:?} - {description}",
+    format!("  - ||{name:<0$}|| (+0x{offset:04x}): {access:?} - {description}",
             max_field_len - 5,
             name = &register.name,
             offset = register.address_offset,
@@ -126,7 +128,7 @@ fn format_field(field: &Field,
                 settings: &OutputSettings) -> String {
     let mut strs: Vec<String> = Vec::new();
 
-    strs.push(format!("      - {name:<0$} :",
+    strs.push(format!("      - ||{name:<0$}|| :",
                       max_field_len,
                       name = &field.name));
 
@@ -153,7 +155,7 @@ fn format_enumerated_value(enumerated_value: &EnumeratedValue,
                            max_field_len: usize,
                            settings: &OutputSettings) -> String {
     let mut strs: Vec<String> = Vec::new();
-    strs.push(format!("{blank:>0$} + {name}",
+    strs.push(format!("||{blank:>0$}|| + {name}",
                       max_field_len + 16,
                       blank = "",
                       name = &enumerated_value.name));
