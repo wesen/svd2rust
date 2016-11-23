@@ -10,7 +10,7 @@
 - Get the start address of each peripheral register block.
 
 ```
-$ svd2rust -i STM32F30x.svd
+$ svd2rust -i STM32F30x.svd generate
 const GPIOA: usize = 0x48000000;
 const GPIOB: usize = 0x48000400;
 const GPIOC: usize = 0x48000800;
@@ -20,10 +20,31 @@ const GPIOF: usize = 0x48001400;
 (..)
 ```
 
+- Search for a block, register or field
+
+```
+$ svd2rust -i STM32F30x.svd list nvic
+NVIC (NVIC) (0xe000e000): Nested Vectored Interrupt Controller
+  - ICTR   (+0x0004): ReadOnly - Interrupt Controller Type Register
+      - INTLINESNUM :   0-3 - Total number of interrupt lines in groups
+
+  - STIR   (+0x0f00): WriteOnly - Software Triggered Interrupt Register
+      - INTID       :   0-8 - interrupt to be triggered
+
+  - ISER0  (+0x0100): ReadWrite - Interrupt Set-Enable Register
+      - SETENA      :  0-31 - SETENA
+
+  - ISER1  (+0x0104): ReadWrite - Interrupt Set-Enable Register
+      - SETENA      :  0-31 - SETENA
+
+  - ISER2  (+0x0108): ReadWrite - Interrupt Set-Enable Register
+      - SETENA      :  0-31 - SETENA
+(..)
+```
 - Generate a register map for a single peripheral.
 
 ```
-$ svd2rust -i STM32F30x.svd rcc | head
+$ svd2rust -i STM32F30x.svd generate rcc | head
 #[repr(C)]
 /// Reset and clock control
 pub struct Rcc {
