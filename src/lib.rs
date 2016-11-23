@@ -5,10 +5,11 @@ extern crate svd_parser as svd;
 #[macro_use]
 extern crate quote;
 extern crate syn;
+extern crate regex;
 
 pub mod list;
 pub mod generate;
 
 pub use generate::{gen_peripheral};
-pub use list::{list_peripheral};
+pub use list::{list_peripheral, create_regex, match_peripheral};
 

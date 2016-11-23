@@ -1,6 +1,7 @@
 extern crate clap;
 extern crate svd2rust;
 extern crate svd_parser as svd;
+extern crate regex;
 
 use std::ascii::AsciiExt;
 use std::fs::File;
@@ -43,9 +44,9 @@ fn list_peripherals(d: &svd::Device, pattern: Option<&str>) {
             }
         }
         Some(pattern) => {
-            let pattern = pattern.to_ascii_lowercase();
+            let regex = svd2rust::create_regex(pattern);
             for peripheral in &d.peripherals {
-                if peripheral.name.to_ascii_lowercase().contains(&pattern) {
+                if svd2rust::match_peripheral(&regex, peripheral, true) {
                     println!("{}", svd2rust::list_peripheral(peripheral));
                 }
             }

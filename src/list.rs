@@ -1,4 +1,86 @@
 use svd::{Access, EnumeratedValue, Field, Peripheral, Register};
+use regex::Regex;
+
+/// Create a regex that matches the search string in both lowercase and uppercase.
+pub fn create_regex(search_string: &str) -> Regex {
+    let mut res = String::new();
+
+    for c in search_string.chars() {
+        res.push('[');
+        res.push_str(&c.to_uppercase().collect::<String>());
+        res.push_str(&c.to_lowercase().collect::<String>());
+        res.push(']');
+    }
+
+    Regex::new(&res).unwrap()
+}
+
+fn match_option(re: &Regex, s: &Option<String>) -> bool {
+    s.is_some() && re.is_match(s.as_ref().unwrap())
+}
+
+fn match_field(re: &Regex, field: &Field, extended: bool) -> bool {
+    if re.is_match(&field.name) {
+        return true;
+    }
+
+    if let Some(values) = field.enumerated_values.as_ref() {
+        for value in values.values.iter() {
+            let value : &EnumeratedValue = value;
+            if re.is_match(&value.name) {
+                return true;
+            }
+
+            if extended && match_option(re, &field.description) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+fn match_register(re: &Regex, reg: &Register, extended: bool) -> bool {
+    if re.is_match(&reg.name) {
+        return true;
+    }
+
+    if extended && re.is_match(&reg.description) {
+        return true;
+    }
+
+    if let Some(fields) = reg.fields.as_ref() {
+        for field in fields {
+            if match_field(re, &field, extended) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+pub fn match_peripheral(re: &Regex, peripheral: &Peripheral, extended: bool) -> bool {
+    if re.is_match(&peripheral.name) ||
+        match_option(re, &peripheral.group_name) {
+        return true;
+    }
+    if extended {
+        if match_option(re, &peripheral.description) {
+            return true;
+        }
+    }
+
+    if let Some(registers) = peripheral.registers.as_ref() {
+        for register in registers {
+            if match_register(re, register, extended) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
 
 /// Format a peripheral's name and information
 fn format_peripheral(p: &Peripheral) -> String {
@@ -53,7 +135,8 @@ fn format_field(field: &Field, max_field_len: usize) -> String {
     strs.join(" ")
 }
 
-fn format_enumerated_value(enumerated_value: &EnumeratedValue, max_field_len : usize) -> String {
+/// Format an enumerated field value
+fn format_enumerated_value(enumerated_value: &EnumeratedValue, max_field_len: usize) -> String {
     let mut strs: Vec<String> = Vec::new();
     strs.push(format!("{blank:>0$} + {name}",
                       max_field_len + 16,
