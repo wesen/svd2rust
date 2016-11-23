@@ -61,11 +61,12 @@ fn print_highlighted(s: &str, regex: &Regex, name_style: &Style, search_style: &
 
     let mut prev = 0;
     for pos in HILITE_RE.find_iter(s) {
-        print!("{}", &s[prev..pos.0]);
-        print!("{}", name_style.paint(&s[(pos.0 + 2)..(pos.1-2)]));
+        print!("{}", print_search_highlight(&s[prev..pos.0], regex, search_style));
+        let name = &s[(pos.0 + 2)..(pos.1 - 2)];
+        print!("{}", name_style.paint(name));
         prev = pos.1;
     }
-    print!("{}", &s[prev..]);
+    print!("{}", print_search_highlight(&s[prev..], regex, search_style));
 }
 
 fn list_peripherals(d: &svd::Device, pattern: Option<&str>) {
