@@ -2,6 +2,7 @@ extern crate clap;
 extern crate svd2rust;
 extern crate svd_parser as svd;
 extern crate regex;
+extern crate term;
 
 use std::ascii::AsciiExt;
 use std::fs::File;
@@ -35,6 +36,9 @@ fn generate_peripherals(d: &svd::Device, pattern: Option<&str>) {
 }
 
 fn list_peripherals(d: &svd::Device, pattern: Option<&str>) {
+    let mut t = term::stdout();
+    let colorize = t.is_some() && svd2rust::tty::stdout_isatty();
+
     match pattern {
         None => {
             for peripheral in &d.peripherals {
@@ -47,7 +51,21 @@ fn list_peripherals(d: &svd::Device, pattern: Option<&str>) {
             let regex = svd2rust::create_regex(pattern);
             for peripheral in &d.peripherals {
                 if svd2rust::match_peripheral(&regex, peripheral, true) {
-                    println!("{}", svd2rust::list_peripheral(peripheral));
+                    let s = svd2rust::list_peripheral(peripheral);
+                    if colorize {
+                        let mut t = t.as_mut().unwrap();
+                        let mut prev = 0;
+                        for pos in regex.find_iter(&s) {
+                            write!(t, "{}", &s[prev..pos.0]).unwrap();
+                            t.fg(term::color::BRIGHT_GREEN).unwrap();
+                            write!(t, "{}", &s[pos.0..pos.1]).unwrap();
+                            t.reset().unwrap();
+                            prev = pos.1;
+                        }
+                        writeln!(t, "{}", &s[prev..]).unwrap();
+                    } else {
+                        println!("{}", s);
+                    }
                 }
             }
         }
