@@ -3,10 +3,15 @@ extern crate svd2rust;
 extern crate svd_parser as svd;
 extern crate regex;
 extern crate term;
+extern crate term_painter;
 
 use std::ascii::AsciiExt;
 use std::fs::File;
 use std::io::Read;
+
+use term_painter::ToStyle;
+use term_painter::Color::*;
+use term_painter::Attr::*;
 
 use clap::{App, Arg, SubCommand};
 
@@ -36,36 +41,43 @@ fn generate_peripherals(d: &svd::Device, pattern: Option<&str>) {
 }
 
 fn list_peripherals(d: &svd::Device, pattern: Option<&str>) {
-    let mut t = term::stdout();
-    let colorize = t.is_some() && svd2rust::tty::stdout_isatty();
+    let t = term::stdout();
+    let colorize = t.is_some() && t.unwrap().supports_color() && svd2rust::tty::stdout_isatty();
+
+    let outputSettings = svd2rust::list::OutputSettings {
+        verbosity: 2,
+    };
+    let searchSettings = svd2rust::list::SearchSettings {
+        search_descriptions: true
+    };
+
+    let searchHighlightStyle = if colorize { BrightGreen.bold().to_style() } else { Plain.to_style() };
+    let nameStyle = if colorize { White.bold().to_style() } else { Plain.to_style() };
 
     match pattern {
         None => {
+            let max_field_len = d.peripherals.iter().map(|p| p.name.len()).max().unwrap();
             for peripheral in &d.peripherals {
-                println!("{} at 0x{:08x}",
-                         peripheral.name,
-                         peripheral.base_address);
+                println!("{name:<0$} (0x{address:08x}) - {description}",
+                         max_field_len,
+                         name = nameStyle.paint(&peripheral.name),
+                         address = peripheral.base_address,
+                         description = peripheral.description.as_ref().unwrap_or(&"".to_owned()));
             }
         }
         Some(pattern) => {
             let regex = svd2rust::create_regex(pattern);
             for peripheral in &d.peripherals {
-                if svd2rust::match_peripheral(&regex, peripheral, true) {
-                    let s = svd2rust::list_peripheral(peripheral);
-                    if colorize {
-                        let mut t = t.as_mut().unwrap();
-                        let mut prev = 0;
-                        for pos in regex.find_iter(&s) {
-                            write!(t, "{}", &s[prev..pos.0]).unwrap();
-                            t.fg(term::color::BRIGHT_GREEN).unwrap();
-                            write!(t, "{}", &s[pos.0..pos.1]).unwrap();
-                            t.reset().unwrap();
-                            prev = pos.1;
-                        }
-                        writeln!(t, "{}", &s[prev..]).unwrap();
-                    } else {
-                        println!("{}", s);
+                if svd2rust::match_peripheral(&regex, peripheral, &searchSettings) {
+                    let s = svd2rust::list_peripheral(peripheral, &outputSettings);
+
+                    let mut prev = 0;
+                    for pos in regex.find_iter(&s) {
+                        print!("{}", &s[prev..pos.0]);
+                        print!("{}", searchHighlightStyle.paint(&s[pos.0..pos.1]));
+                        prev = pos.1;
                     }
+                    print!("{}", &s[prev..]);
                 }
             }
         }

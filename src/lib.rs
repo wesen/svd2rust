@@ -7,6 +7,7 @@ extern crate quote;
 extern crate syn;
 extern crate regex;
 extern crate libc;
+extern crate term_painter;
 
 pub mod list;
 pub mod generate;
